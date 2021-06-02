@@ -12,11 +12,20 @@ quickjs-sys = { path = "../quickjs-sys" }
 
 [dev-dependencies]
 criterion = "0.3"
-wasmtime = "0.26.0"
-wasmtime-wasi = "0.26.0"
+# wasi-common = "0.26.1"
+# wasmtime = "0.26.0"
+# wasmtime-wasi = "0.26.0"
+lucetc = { git = "https://github.com/bytecodealliance/lucet", branch = "main" }
+lucet-runtime = { git = "https://github.com/bytecodealliance/lucet", branch = "main" }
+lucet-wasi = { git = "https://github.com/bytecodealliance/lucet", branch = "main" }
+tokio = { version = "1.5.0" }
+
+# [[bench]]
+# name = "wasmtime"
+# harness = false
 
 [[bench]]
-name = "qjs_wasmtime"
+name = "lucet"
 harness = false
 
 [features]
