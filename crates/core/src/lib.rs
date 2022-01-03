@@ -7,7 +7,7 @@ use js_binding::{context::Context, value::Value};
 
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
-use transcode::{transcode_input, transcode_output};
+use suborbital::runnable::*;
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -34,31 +34,48 @@ pub extern "C" fn init() {
 
         let _ = context.eval_global(SCRIPT_NAME, &contents).unwrap();
         let global = context.global_object().unwrap();
-        let shopify = global.get_property("Shopify").unwrap();
-        let main = shopify.get_property("main").unwrap();
+        let suborbital = global.get_property("Suborbital").unwrap();
+        let main = suborbital.get_property("main").unwrap();
 
         JS_CONTEXT.set(context).unwrap();
-        ENTRYPOINT.0.set(shopify).unwrap();
+        ENTRYPOINT.0.set(suborbital).unwrap();
         ENTRYPOINT.1.set(main).unwrap();
     }
 }
 
-#[export_name = "shopify_main"]
-pub extern "C" fn run() {
-    unsafe {
-        let context = JS_CONTEXT.get().unwrap();
-        let shopify = ENTRYPOINT.0.get().unwrap();
-        let main = ENTRYPOINT.1.get().unwrap();
-        let input_bytes = engine::load().expect("Couldn't load input");
+struct JsRunnable {}
 
-        let input_value = transcode_input(&context, &input_bytes).unwrap();
-        let output_value = main.call(&shopify, &[input_value]);
-
-        if output_value.is_err() {
-            panic!("{}", output_value.unwrap_err().to_string());
+impl Runnable for JsRunnable {
+    fn run(&self, in_bytes: Vec<u8>) -> Result<Vec<u8>, RunErr> {
+        unsafe {
+            let context = JS_CONTEXT.get().unwrap();
+            let suborbital = ENTRYPOINT.0.get().unwrap();
+            let main = ENTRYPOINT.1.get().unwrap();
+            let input = context
+                .value_from_bytes(in_bytes)
+                .expect("Couldn't load input");
+            let output_value = main.call(&suborbital, &[input]);
+            if output_value.is_err() {
+                panic!("{}", output_value.unwrap_err().to_string());
+            }
+            match output_value {
+                Ok(value) => {
+                    let vec = context.value_to_bytes(value).unwrap();
+                    Ok(vec)
+                }
+                Err(err) => {
+                    let message = err.to_string();
+                    Err(RunErr { code: 500, message })
+                }
+            }
         }
-
-        let output = transcode_output(output_value.unwrap()).unwrap();
-        engine::store(&output).expect("Couldn't store output");
     }
+}
+
+// initialize the runner
+static RUNNABLE: &JsRunnable = &JsRunnable {};
+
+#[no_mangle]
+pub extern "C" fn _start() {
+    use_runnable(RUNNABLE);
 }

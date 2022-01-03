@@ -56,6 +56,10 @@ impl Value {
         Self::new(self.context, return_val)
     }
 
+    pub fn as_raw(&self) -> JSValue {
+        self.value
+    }
+
     pub fn as_i32_unchecked(&self) -> i32 {
         self.value as i32
     }

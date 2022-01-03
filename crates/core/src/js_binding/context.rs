@@ -3,10 +3,10 @@ use super::value::Value;
 use anyhow::Result;
 use quickjs_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
-    JSContext, JSRuntime, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray,
-    JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext,
-    JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen,
-    JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JSContext, JSRuntime, JSValue, JS_Eval, JS_FreeCString, JS_GetArrayBuffer, JS_GetGlobalObject,
+    JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData,
+    JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject,
+    JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
 use std::io::Write;
@@ -111,6 +111,18 @@ impl Context {
         let raw =
             unsafe { JS_NewStringLen(self.inner, val.as_ptr() as *const c_char, val.len() as _) };
         Value::new(self.inner, raw)
+    }
+
+    pub fn value_from_bytes(&self, val: Vec<u8>) -> Result<Value> {
+        let raw =
+            unsafe { JS_NewArrayBufferCopy(self.inner, val.as_ptr() as *const u8, val.len() as _) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn value_to_bytes(&self, val: Value) -> Result<Vec<u8>> {
+        let mut length = val.get_property("byteLength").unwrap().as_u32_unchecked();
+        let raw = unsafe { JS_GetArrayBuffer(self.inner, &mut length, val.as_raw()) };
+        Ok(unsafe { Vec::from_raw_parts(raw, length as usize, length as usize) })
     }
 
     pub fn null_value(&self) -> Result<Value> {
