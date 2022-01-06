@@ -1,4 +1,4 @@
-# Javy: A _Jav_ aScript to WebAssembl _y_  toolchain
+# Javy: A _Jav_ aScript to WebAssembl _y_ toolchain
 
 ![Build status](https://github.com/Shopify/javy/actions/workflows/ci.yml/badge.svg?branch=main)
 
@@ -44,3 +44,7 @@ javy index.js -o destination/index.wasm
 ```
 
 For more information on the commands you can run `javy --help`
+
+## Reactr Examples
+
+You can check out the examples in the `examples` directory. After running the steps above and having `javy` on your PATH, `cd` to any example folder and run `npm install && npm run build` to build a [Reactr](https://github.com/suborbital/reactr)-compatible wasm file.
