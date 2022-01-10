@@ -7,7 +7,7 @@ declare var TextDecoder: any;
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
 
-export const main = (payload: ArrayBuffer): ArrayBuffer => {
+export const run_e = (payload: ArrayBuffer): ArrayBuffer => {
   let input = JSON.parse(decoder.decode(payload));
   let output = JSON.stringify(run(input));
   return encoder.encode(output).buffer;

@@ -1,6 +1,6 @@
 import "fast-text-encoding";
 
-import { main } from "./";
+import { run_e } from "./";
 
 declare var TextEncoder: any;
 declare var TextDecoder: any;
@@ -19,7 +19,7 @@ const bytes = encoder.encode(JSON.stringify(user)).buffer;
 
 describe("json", () => {
   it("marks young users as inactive", () => {
-    const result = main(bytes);
+    const result = run_e(bytes);
     const json = JSON.parse(decoder.decode(result));
     expect(json.active).toEqual(false);
   });
