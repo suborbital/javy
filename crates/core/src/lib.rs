@@ -35,7 +35,7 @@ pub extern "C" fn init() {
         let _ = context.eval_global(SCRIPT_NAME, &contents).unwrap();
         let global = context.global_object().unwrap();
         let suborbital = global.get_property("Suborbital").unwrap();
-        let main = suborbital.get_property("run").unwrap();
+        let main = suborbital.get_property("run_e").unwrap();
 
         JS_CONTEXT.set(context).unwrap();
         ENTRYPOINT.0.set(suborbital).unwrap();
