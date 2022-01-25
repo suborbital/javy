@@ -4,9 +4,10 @@ use anyhow::Result;
 use quickjs_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
     JSContext, JSRuntime, JSValue, JS_Eval, JS_FreeCString, JS_GetArrayBuffer, JS_GetGlobalObject,
-    JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData,
-    JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject,
-    JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JS_NewArray, JS_NewArrayBuffer, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext,
+    JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
+    JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2,
+    JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
 use std::io::Write;
@@ -64,6 +65,21 @@ impl Context {
 
     pub fn object_value(&self) -> Result<Value> {
         let raw = unsafe { JS_NewObject(self.inner) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn memory_value(&self) -> Result<Value> {
+        let raw = unsafe {
+            JS_NewArrayBuffer(
+                self.inner,
+                std::ptr::null_mut(),
+                // Number of pages * wasm page size
+                (core::arch::wasm32::memory_size(0) * 65536) as u32,
+                None,
+                std::ptr::null_mut(),
+                i32::from(false),
+            )
+        };
         Value::new(self.inner, raw)
     }
 
