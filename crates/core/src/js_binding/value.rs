@@ -2,11 +2,10 @@ use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    ext_js_undefined, size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64,
-    JS_BigIntToUint64, JS_Call, JS_DefinePropertyGetSet, JS_DefinePropertyValueStr,
-    JS_DefinePropertyValueUint32, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
-    JS_IsFloat64_Ext, JS_NewAtom, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_PROP_HAS_GET,
-    JS_PROP_HAS_SET, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
+    size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
+    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetPropertyStr,
+    JS_GetPropertyUint32, JS_IsArray, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64,
+    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
     JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::ffi::CString;
@@ -195,47 +194,6 @@ impl Value {
         if ret < 0 {
             let exception = self.as_exception()?;
             return Err(exception.into_error());
-        }
-        Ok(())
-    }
-
-    pub fn define_property(
-        &self,
-        key: impl Into<Vec<u8>>,
-        getter: Option<Value>,
-        setter: Option<Value>,
-    ) -> Result<()> {
-        unsafe {
-            let cstring_key = CString::new(key)?;
-            let key_atom = JS_NewAtom(self.context, cstring_key.as_ptr());
-            let mut flags = JS_PROP_C_W_E;
-            let getter = match getter {
-                Some(value) => {
-                    flags |= JS_PROP_HAS_GET;
-                    value.value
-                }
-                None => ext_js_undefined,
-            };
-            let setter = match setter {
-                Some(value) => {
-                    flags |= JS_PROP_HAS_SET;
-                    value.value
-                }
-                None => ext_js_undefined,
-            };
-            let ret = JS_DefinePropertyGetSet(
-                self.context,
-                self.value,
-                key_atom,
-                getter,
-                setter,
-                flags as i32,
-            );
-
-            if ret < 0 {
-                let exception = self.as_exception()?;
-                return Err(exception.into_error());
-            }
         }
         Ok(())
     }

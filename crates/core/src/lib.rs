@@ -13,6 +13,8 @@ use std::mem;
 use std::os::raw::c_int;
 use std::slice;
 
+use convert_case::{Case, Casing};
+
 #[cfg(not(test))]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -46,7 +48,7 @@ macro_rules! bind_imports {
             };
             $export_obj
                 .set_property(
-                    stringify!($name),
+                    stringify!($name).to_case(Case::Kebab),
                     $context.new_callback(callback).unwrap(),
                 )
                 .expect(stringify!(failed to set property $name));
@@ -96,19 +98,14 @@ fn build_memory(context: &Context) -> Value {
     // the JS engine _and_ the Rust code, so great care should be taken
     // to avoid memory corruption from the JS side.
     let memory = context.object_value().unwrap();
-    let callback = unsafe {
-        context
-            .new_callback(
-                |_ctx: *mut JSContext,
-                 _this: JSValue,
-                 argc: c_int,
-                 argv: *mut JSValue,
-                 _magic: c_int| { context.memory_value().unwrap().as_raw() },
-            )
-            .unwrap()
-    };
+    // TODO: Provide this ArrayBuffer as a getter that returns an ArrayBuffer
+    // for the full memory as it grows. If the JS attemtps to read or write to
+    // a region that hasn't yet been claimed by the WebAssembly module, it will
+    // trap; granted, it would have caused an error anyway. The difference is
+    // that the trap cannot be caught. This generally shouldn't be an issue, as
+    // all interactions with memory are done by generated code.
     memory
-        .define_property("buffer", Some(callback), None)
+        .set_property("buffer", context.memory_value().unwrap())
         .expect("failed to set buffer on memory");
     memory
 }
@@ -157,15 +154,14 @@ fn setup_imports(context: &Context, import_obj: &Value) {
                 ident: i32,
             ) -> i32;
             fn get_ffi_result(pointer: *const u8, ident: i32) -> i32;
+            fn return_result(result_pointer: *const u8, result_size: i32, ident: i32);
+            fn return_error(code: i32, result_pointer: *const u8, result_size: i32, ident: i32);
         });
     }
 
-    // Since the bindings are working in "export" mode, allocations are
-    // expected to be done via `canonical_abi_realloc`.
     import_obj
         .set_property("canonical_abi_realloc", build_realloc(&context))
         .expect("failed to set realloc on import object");
-
     import_obj
         .set_property("memory", build_memory(&context))
         .expect("failed to set memory on import object");
@@ -216,7 +212,6 @@ pub extern "C" fn init() {
 #[no_mangle]
 pub unsafe extern "C" fn run_e(pointer: *mut u8, size: i32, ident: i32) {
     extern "C" {
-        fn return_result(result_pointer: *const u8, result_size: i32, ident: i32);
         fn return_error(code: i32, result_pointer: *const u8, result_size: i32, ident: i32);
     }
 
@@ -232,10 +227,7 @@ pub unsafe extern "C" fn run_e(pointer: *mut u8, size: i32, ident: i32) {
     let output_value = main.call(&suborbital, &[input, id]);
 
     match output_value {
-        Ok(value) => {
-            let vec = context.value_to_bytes(value).unwrap();
-            return_result(vec.as_ptr(), vec.len() as i32, ident)
-        }
+        Ok(_) => (),
         Err(err) => {
             let message = err.to_string();
             return_error(500, message.as_ptr(), message.len() as i32, ident);

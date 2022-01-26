@@ -9,8 +9,9 @@ const encoder = new TextEncoder();
 
 export { env };
 
-export const run_e = (payload: ArrayBuffer, ident: number): ArrayBuffer => {
+export const run_e = (payload: ArrayBuffer, ident: number) => {
   let input = JSON.parse(decoder.decode(payload));
-  let output = JSON.stringify(run(input, ident));
-  return encoder.encode(output).buffer;
+  let result = JSON.stringify(run(input, ident));
+  let output = encoder.encode(result);
+  env.returnResult(output, ident);
 };

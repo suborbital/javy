@@ -73,11 +73,16 @@ impl Context {
             JS_NewArrayBuffer(
                 self.inner,
                 std::ptr::null_mut(),
+                // Maximum QuickJS ArrayBuffer size, 32767 WebAssembly pages.
+                32767 * 65536,
+                // This code works, but as the wasm memory grows, the returned
+                // ArrayBuffer doesn't span the whole memory.
+
                 // Number of pages * wasm page size
-                (core::arch::wasm32::memory_size(0) * 65536) as u32,
+                // (core::arch::wasm32::memory_size(0) * 65536) as u32,
                 None,
                 std::ptr::null_mut(),
-                i32::from(false),
+                i32::from(true),
             )
         };
         Value::new(self.inner, raw)

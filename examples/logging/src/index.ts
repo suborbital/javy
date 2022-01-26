@@ -11,8 +11,9 @@ const encoder = new TextEncoder();
 
 export { env };
 
-export const run_e = (payload: ArrayBuffer, ident: number): ArrayBuffer => {
+export const run_e = (payload: ArrayBuffer, ident: number) => {
   let input = decoder.decode(payload);
-  let output = run(input, ident);
-  return encoder.encode(output).buffer;
+  let result = run(input, ident);
+  let output = encoder.encode(result);
+  env.returnResult(output, ident);
 };

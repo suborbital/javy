@@ -930,7 +930,6 @@ dependencies = [
  "serde",
  "serde-transcode",
  "serde_json",
- "suborbital",
  "wee_alloc",
 ]
 
@@ -1660,25 +1659,6 @@ dependencies = [
  "heck",
  "proc-macro-error",
  "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "suborbital"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f514bcf74ea1f22eb11231a375cf3c570466007547e62ad48460d5a8fb0c0380"
-dependencies = [
- "suborbital-macro",
-]
-
-[[package]]
-name = "suborbital-macro"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9050b66602381660d14e39914007345f236c802148cb2b88a6225e797a51b44"
-dependencies = [
  "quote",
  "syn",
 ]
