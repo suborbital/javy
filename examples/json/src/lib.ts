@@ -1,3 +1,5 @@
+import { Env } from "./env";
+
 interface User {
   first_name: string;
   last_name: string;
@@ -5,10 +7,11 @@ interface User {
   active: boolean;
 }
 
-export const run = (user: User): User => {
-  if (user.age < 13) {
-    user.active = false;
-  }
+export const env = new Env();
+
+export const run = (user: User, ident: number): User => {
+  user.first_name = "Modified first name";
+  user.last_name = "Modified last name";
 
   return user;
 };

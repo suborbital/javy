@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "dependencies": {
     "@types/fast-text-encoding": "^1.0.1",
-    "fast-text-encoding": "^1.0.3"
+    "fast-text-encoding": "^1.0.3",
+    "fastestsmallesttextencoderdecoder-encodeinto": "^1.0.22"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.4",
@@ -24,8 +25,8 @@
   },
   "scripts": {
     "prebuild": "webpack",
-    "build": "javy build/index.js -o json.wasm",
-    "test": "echo '{\"first_name\":\"Example\",\"last_name\":\"Exampleson\",\"age\":10,\"active\":true}' | sat --stdin json.wasm"
+    "build": "javy build/index.js -o logging.wasm",
+    "test": "echo 'test user' | sat --stdin logging.wasm"
   },
   "engines": {
     "node": "^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0"
