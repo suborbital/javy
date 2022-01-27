@@ -23,6 +23,21 @@ static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
 static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
 static SCRIPT_NAME: &str = "script.js";
 
+// Wraps the call to the host function by either casting the result to a
+// JSValue or returning `undefined` if the host function doesn't return a value
+// (as _all_ JS functions must return a value). This is really only meant to be
+// used by the `bind_imports!` macro to keep it relatively simple.
+//
+//  bind_js_return!(context, host_func(arg), i32)
+//      =>
+//  host_func(arg) as JSValue
+//
+//  bind_js_return!(context, host_func(arg),)
+//      =>
+//  {
+//      host_func(arg);
+//      context.undefined_value().unwrap().as_raw()
+//  }
 macro_rules! bind_js_return {
     ($context:ident, $expr:expr, $return_ty:ty) => {
         $expr as JSValue
@@ -32,8 +47,20 @@ macro_rules! bind_js_return {
         $context.undefined_value().unwrap().as_raw()
     }};
 }
+
+// TODO: Support i64, f32, and f64 types.
+// Creates JS closures for all host functions and assigns them to an import
+// object.
+//
+//  bind_imports!(context, import_obj, {
+//      fn get_ffi_result(pointer: *const u8, ident: i32) -> i32;
+//      fn return_result(result_pointer: *const u8, result_size: i32, ident: i32);
+//  })
+//
+// The output of this macro is somewhat similar to the `build_realloc`
+// function, except that it assigns the closure value to the import object.
 macro_rules! bind_imports {
-    ($context:ident, $export_obj:ident, {$(fn $name:ident ($($param:ident : $param_ty:ty),*$(,)?) $(-> $return_ty:ty)?);*;}) => {{
+    ($context:ident, $import_obj:ident, {$(fn $name:ident ($($param:ident : $param_ty:ty),*$(,)?) $(-> $return_ty:ty)?);*;}) => {{
         $({
             let callback = |_ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
                 extern "C" {
@@ -46,7 +73,7 @@ macro_rules! bind_imports {
                     panic!("Incorrect number of arguments")
                 }
             };
-            $export_obj
+            $import_obj
                 .set_property(
                     stringify!($name).to_case(Case::Kebab),
                     $context.new_callback(callback).unwrap(),
