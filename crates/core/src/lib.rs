@@ -213,7 +213,6 @@ pub extern "C" fn init() {
         let global = context.global_object().unwrap();
         let suborbital = global.get_property("Suborbital").unwrap();
         let main = suborbital.get_property("run_e").unwrap();
-        let env = suborbital.get_property("env").unwrap();
 
         // Unlike the other language bindings, JS never considers itself a
         // WebAssembly module (which makes sense—JS is usually interoping with
@@ -225,9 +224,10 @@ pub extern "C" fn init() {
         let imports = context.object_value().unwrap();
         setup_imports(&context, &imports);
 
-        // The JS expects our host functions under the `_exports` key on `env`.
-        env.set_property("_exports", imports)
-            .expect("failed to set _exports on env");
+        // Inject our host functions
+        suborbital
+            .set_property("imports", imports)
+            .expect("failed to set imports on env");
 
         JS_CONTEXT.set(context).unwrap();
         ENTRYPOINT.0.set(suborbital).unwrap();

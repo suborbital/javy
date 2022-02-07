@@ -1,11 +1,9 @@
-import { Env, LogLevel } from "./env";
+import { log } from "@suborbital/runnable";
 
-export const env = new Env();
-
-export const run = (user: string, ident: number): string => {
+export const run = (user: string): string => {
   let message = "Hello, " + user;
 
-  env.logMsg(message, LogLevel.Info, ident);
+  log.info(message);
 
   return message;
 };

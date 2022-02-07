@@ -1,5 +1,3 @@
-import { Env } from "./env";
-
 interface User {
   first_name: string;
   last_name: string;
@@ -7,9 +5,7 @@ interface User {
   active: boolean;
 }
 
-export const env = new Env();
-
-export const run = (user: User, ident: number): User => {
+export const run = (user: User): User => {
   user.first_name = "Modified first name";
   user.last_name = "Modified last name";
 

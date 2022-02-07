@@ -1,5 +1,8 @@
 import "fastestsmallesttextencoderdecoder-encodeinto/EncoderDecoderTogether.min.js";
-import { run, env } from "./lib";
+
+import { setup, runnable } from "@suborbital/runnable";
+
+import { run } from "./lib";
 
 declare global {
   var TextEncoder: any;
@@ -7,13 +10,14 @@ declare global {
 }
 
 const decoder = new TextDecoder();
-const encoder = new TextEncoder();
 
-export { env };
+export function run_e(payload: ArrayBuffer, ident: number) {
+  // Imports will be injected by the runtime
+  // @ts-ignore
+  setup(this.imports, ident);
 
-export const run_e = (payload: ArrayBuffer, ident: number) => {
-  let input = decoder.decode(payload);
-  let result = run(input, ident);
-  let output = encoder.encode(result);
-  env.returnResult(output, ident);
-};
+  const input = decoder.decode(payload);
+  const result = run(input);
+
+  runnable.returnResult(result);
+}
