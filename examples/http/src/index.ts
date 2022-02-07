@@ -1,6 +1,6 @@
 import "fastestsmallesttextencoderdecoder-encodeinto/EncoderDecoderTogether.min.js";
 
-import { setup, runnable } from "@suborbital/js";
+import { setup, runnable } from "@suborbital/runnable";
 
 import { run } from "./lib";
 

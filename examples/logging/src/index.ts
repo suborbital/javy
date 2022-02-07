@@ -1,7 +1,7 @@
 import "fastestsmallesttextencoderdecoder-encodeinto/EncoderDecoderTogether.min.js";
 import { run } from "./lib";
 
-import { setup, runnable } from "@suborbital/js";
+import { setup, runnable } from "@suborbital/runnable";
 
 declare global {
   var TextEncoder: any;

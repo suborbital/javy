@@ -3,7 +3,7 @@
   "description": "",
   "version": "1.0.0",
   "dependencies": {
-    "@suborbital/js": "*",
+    "@suborbital/runnable": "^0.14.0",
     "fastestsmallesttextencoderdecoder-encodeinto": "^1.0.22"
   },
   "devDependencies": {

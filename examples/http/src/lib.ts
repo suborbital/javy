@@ -1,4 +1,4 @@
-import { log, http } from "@suborbital/js";
+import { log, http } from "@suborbital/runnable";
 
 export const run = (input: string): string => {
   log.info("Fetching `https://httpbin.org/get`");
