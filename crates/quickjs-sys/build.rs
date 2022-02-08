@@ -7,18 +7,24 @@ fn main() {
         v @ "macos" => v,
         not_supported => panic!("{} is not supported.", not_supported),
     };
+    let host_arch = match std::env::consts::ARCH {
+        v @ "x86_64" => v,
+        v @ "aarch64" => v,
+        not_supported => panic!("{} is not supported.", not_supported),
+    };
+    let host_platform_arch = format!("{}/{}", host_platform, host_arch);
     let sysroot = format!(
         "--sysroot=vendor/{}/wasi-sdk/share/wasi-sysroot",
-        host_platform
+        host_platform_arch
     );
 
     // Use a custom version of clang/ar with WASI support.
     // They are both vendored within the WASI sdk for both OSX and linux.
-    let clang = format!("vendor/{}/wasi-sdk/bin/clang", host_platform);
+    let clang = format!("vendor/{}/wasi-sdk/bin/clang", host_platform_arch);
     env::set_var("CC_wasm32_wasi", &clang);
     env::set_var("CC", &clang);
 
-    let ar = format!("vendor/{}/wasi-sdk/bin/ar", host_platform);
+    let ar = format!("vendor/{}/wasi-sdk/bin/ar", host_platform_arch);
     env::set_var("AR_wasm32_wasi", &ar);
     env::set_var("AR", &ar);
 
