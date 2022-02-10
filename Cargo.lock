@@ -110,9 +110,9 @@ dependencies = [
 
 [[package]]
 name = "binaryen"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a9b407f52d0b918c6ea41d7a328321496b315f61da99a309b375dfbbd04bc9a"
+checksum = "783bea139d75b6a565b13fab54d12ec4d58724a9458598ad7283d578f4f8777a"
 dependencies = [
  "binaryen-sys",
 ]
