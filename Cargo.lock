@@ -110,8 +110,9 @@ dependencies = [
 
 [[package]]
 name = "binaryen"
-version = "0.12.0"
-source = "git+https://github.com/pepyakin/binaryen-rs?rev=5b5e477#5b5e4778c29fd609e7ec16956599d9bc2d2f182a"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "783bea139d75b6a565b13fab54d12ec4d58724a9458598ad7283d578f4f8777a"
 dependencies = [
  "binaryen-sys",
 ]
@@ -119,7 +120,8 @@ dependencies = [
 [[package]]
 name = "binaryen-sys"
 version = "0.12.0"
-source = "git+https://github.com/pepyakin/binaryen-rs?rev=5b5e477#5b5e4778c29fd609e7ec16956599d9bc2d2f182a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86e9636d01b92f2df45dce29c35a9e3724687c1055bb4472fb4b829cc4a5a561"
 dependencies = [
  "cc",
  "cmake",
