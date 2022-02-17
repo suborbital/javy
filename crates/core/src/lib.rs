@@ -40,7 +40,9 @@ static SCRIPT_NAME: &str = "script.js";
 //  }
 macro_rules! bind_js_return {
     ($context:ident, $expr:expr, $return_ty:ty) => {
-        $expr as JSValue
+        // i32 is the only return type supported for now, but conveniently
+        // anything else will result in a type error.
+        $context.value_from_i32($expr).unwrap().as_raw()
     };
     ($context:ident, $expr:expr,) => {{
         $expr;
