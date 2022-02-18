@@ -180,7 +180,21 @@ fn setup_imports(context: &Context, import_obj: &Value) {
                 val_size: i32,
                 ident: i32,
             ) -> i32;
+            fn get_static_file(name_pointer: *const u8, name_size: i32, ident: i32) -> i32;
+            fn db_exec(
+                query_type: i32,
+                query_name_pointer: i32,
+                query_name_size: i32,
+                ident: i32,
+            ) -> i32;
             fn get_ffi_result(pointer: *const u8, ident: i32) -> i32;
+            fn add_ffi_var(
+                name_pointer: i32,
+                name_size: i32,
+                val_pointer: i32,
+                val_size: i32,
+                ident: i32,
+            ) -> i32;
             fn return_result(result_pointer: *const u8, result_size: i32, ident: i32);
             fn return_error(code: i32, result_pointer: *const u8, result_size: i32, ident: i32);
         });
