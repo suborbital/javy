@@ -67,12 +67,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/metadata-action@v3
+      - uses: docker/metadata-action@v4
         id: docker_meta
         with:
           images: ghcr.io/suborbital/javy
           tags: |
-            type=match,pattern=suborbital-(v.*)
+            type=match,pattern=suborbital-(v.*),group=1
           flavor: |
             latest=auto
 
