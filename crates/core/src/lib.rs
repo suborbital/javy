@@ -182,6 +182,13 @@ fn setup_imports(context: &Context, import_obj: &Value) {
                 val_size: i32,
                 ident: i32,
             ) -> i32;
+            fn resp_set_header(
+                key_pointer: *const u8,
+                key_size: i32,
+                val_pointer: *const u8,
+                val_size: i32,
+                ident: i32,
+            );
             fn get_static_file(name_pointer: *const u8, name_size: i32, ident: i32) -> i32;
             fn db_exec(
                 query_type: i32,
