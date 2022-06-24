@@ -5,7 +5,7 @@ install:
 	cargo install --path crates/cli
 
 cli: core
-		cd crates/cli && cargo build --release && cd -
+		cd crates/cli && cargo build --release --locked && cd -
 
 check-benchmarks:
 		cd crates/benchmarks \
@@ -14,7 +14,7 @@ check-benchmarks:
 
 core:
 		cd crates/core \
-				&& cargo build --release --target=wasm32-wasi \
+				&& cargo build --release --locked --target=wasm32-wasi \
 				&& cd -
 
 test-core:
