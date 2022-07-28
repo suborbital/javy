@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := cli
 
 install:
-	cargo install --path crates/cli
+	cargo install --path crates/cli --locked
 
 cli: core
 		cd crates/cli && cargo build --release --locked && cd -
