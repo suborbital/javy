@@ -12,7 +12,7 @@ use quickjs_sys::{JSContext, JSValue};
 use std::mem;
 use std::os::raw::c_int;
 use std::slice;
-use std::alloc::{System, Layout}
+use std::alloc::{System, Layout};
 
 use convert_case::{Case, Casing};
 
