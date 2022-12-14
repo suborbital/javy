@@ -54,7 +54,7 @@ jobs:
         run: make fmt
 
   image:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-4-cores
 
     steps:
       - uses: docker/setup-buildx-action@v2
