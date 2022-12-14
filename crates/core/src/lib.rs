@@ -12,6 +12,7 @@ use quickjs_sys::{JSContext, JSValue};
 use std::mem;
 use std::os::raw::c_int;
 use std::slice;
+use std::alloc::{System, Layout}
 
 use convert_case::{Case, Casing};
 
@@ -287,17 +288,11 @@ pub unsafe extern "C" fn run_e(pointer: *mut u8, size: i32, ident: i32) {
 
 #[no_mangle]
 pub unsafe extern "C" fn allocate(size: i32) -> *const u8 {
-    let mut buffer = Vec::with_capacity(size as usize);
-
-    let pointer = buffer.as_mut_ptr();
-
-    mem::forget(buffer);
-
-    pointer as *const u8
+    System.alloc(Layout.from_size_align(size, 1))
 }
 
 /// # Safety
 #[no_mangle]
 pub unsafe extern "C" fn deallocate(pointer: *mut u8, size: i32) {
-    drop(Vec::from_raw_parts(pointer, size as usize, size as usize))
+    System.dealloc(pointer, Layout.from_size_align(size, 1))
 }
