@@ -12,7 +12,7 @@ jobs:
   checks:
     if: 'false'
     name: Tests + Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-4-cores
     steps:
       - uses: actions/checkout@v3
 
