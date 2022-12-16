@@ -1,4 +1,4 @@
-name: CI
+name: ci
 
 on:
   push:
@@ -9,31 +9,26 @@ on:
   pull_request:
 
 jobs:
-  checks:
+  test:
     if: 'false'
-    name: Tests + Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@v1
         with:
-          profile: default
-          toolchain: 1.53.0
-          default: true
+          toolchain: stable
           components: clippy, rustfmt
 
-      - name: Cargo Cache
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: ~/.cargo
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
             ${{ runner.os }}-cargo
-      - name: Cargo Target Cache
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: target
           key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
@@ -53,14 +48,129 @@ jobs:
       - name: Lint
         run: make fmt
 
-  image:
-    runs-on: ubuntu-latest-4-cores
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-wasi
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+            ${{ runner.os }}-cargo
+      - uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+            ${{ runner.os }}-cargo-target
+
+      - run: make core
+
+      - name: Upload core binary to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: engine
+          path: target/wasm32-wasi/release/javy_core.wasm
+
+  cli:
+    needs:  core
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - arm64
+          - amd64
+        include:
+        - build: arm64
+          os: buildjet-2vcpu-ubuntu-2204-arm
+          target: aarch64-unknown-linux-gnu
+        - build: amd64
+          os: ubuntu-latest
+          target: x86_64-unknown-linux-gnu
 
     steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: engine
+          path: crates/cli/
+
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+            ${{ runner.os }}-cargo
+      - uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+            ${{ runner.os }}-cargo-target
+
+      - run: cargo build --release --package javy
+        env:
+          JAVY_ENGINE_PATH: javy_core.wasm
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: javy-${{ matrix.build }}-linux
+          path: target/release/javy
+
+  bin:
+    needs: [cli]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          path: bins/
+
+      - run: gzip -k -f bins/javy-arm64-linux/javy && mv bins/javy-arm64-linux/javy.gz javy-aarch64-linux.gz
+      - run: gzip -k -f bins/javy-amd64-linux/javy && mv bins/javy-amd64-linux/javy.gz javy-x86_64-linux.gz
+
+      - name: Get release tag
+        if: startsWith(github.ref, 'refs/tags/suborbital-v')
+        id: release
+        run: |
+          tag=${GITHUB_REF#"refs/tags/suborbital-"}
+          echo $tag
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      - if: startsWith(github.ref, 'refs/tags/suborbital-v')
+        uses: alexellis/upload-assets@0.4.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          asset_paths: '["javy-*-linux.gz"]'
+
+  image:
+    needs: [cli]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - uses: docker/setup-buildx-action@v2
       - uses: docker/setup-qemu-action@v2
 
-      - uses: docker/login-action@v2
+      - uses: actions/download-artifact@v3
+        with:
+          path: bins/
+
+      - if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -75,13 +185,25 @@ jobs:
           flavor: |
             latest=auto
 
-      - name: Build and push javy image
+      # Build the image on pulls, main
+      - if: ${{ !startsWith(github.ref, 'refs/tags/suborbital-v') }}
         uses: docker/build-push-action@v3
         with:
           cache-from: type=gha
-          cache-to: type=gha,mode=max
-          file: Dockerfile
+          context: .
+          file: Dockerfile-ci
+          push: false
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+
+      # Build and push the image on release tags
+      - if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
+        uses: docker/build-push-action@v3
+        with:
+          cache-from: type=gha
+          context: .
+          file: Dockerfile-ci
           platforms: linux/amd64,linux/arm64
-          push: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
+          push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
