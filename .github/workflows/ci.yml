@@ -162,7 +162,7 @@ jobs:
           push: false
           tags: ghcr.io/suborbital/javy:dev-${{ matrix.arch }}
 
-      - run: docker run -i --rm ghcr.io/suborbital/javy:dev-${{ matrix.arch }} /usr/local/bin/javy --version
+      - run: docker run --rm ghcr.io/suborbital/javy:dev-${{ matrix.arch }} /usr/local/bin/javy --version
 
       # Build and push the image on release tags
       - name: Get release tag
