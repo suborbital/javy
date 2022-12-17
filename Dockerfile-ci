@@ -1,6 +1,0 @@
-FROM debian:bullseye-slim
-
-ARG TARGETARCH
-COPY ./bins/javy-$TARGETARCH-linux/javy /usr/local/bin
-
-RUN chmod +x /usr/local/bin/javy
