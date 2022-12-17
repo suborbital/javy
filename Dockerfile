@@ -1,4 +1,4 @@
-FROM rust:1.56.1-slim-bullseye as builder
+FROM rust:1.66.0-slim-bullseye as builder
 WORKDIR /root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
