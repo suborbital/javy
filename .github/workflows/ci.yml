@@ -169,7 +169,6 @@ jobs:
 
       # Build the image on pulls, main
       - name: Build javy image
-        if: ${{ !startsWith(github.ref, 'refs/tags/suborbital-v') }}
         uses: docker/build-push-action@v3
         with:
           cache-from: type=gha
