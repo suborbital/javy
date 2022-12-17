@@ -178,8 +178,7 @@ jobs:
           push: false
           tags: ghcr.io/suborbital/javy:dev
 
-      - if: ${{ !startsWith(github.ref, 'refs/tags/suborbital-v') }}
-        run: docker run -i --rm ghcr.io/suborbital/javy:dev /usr/local/bin/javy --version
+      - run: docker run -i --rm ghcr.io/suborbital/javy:dev /usr/local/bin/javy --version
 
       # Build and push the image on release tags
       - name: Build and push javy image
