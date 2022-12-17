@@ -85,16 +85,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build:
+        arch:
           - arm64
           - amd64
         include:
-        - build: arm64
-          os: buildjet-2vcpu-ubuntu-2204-arm
-          target: aarch64-unknown-linux-gnu
-        - build: amd64
-          os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
+          - arch: arm64
+            os: buildjet-2vcpu-ubuntu-2204-arm
+            target: aarch64-unknown-linux-gnu
+          - arch: amd64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
 
     steps:
       - uses: actions/checkout@v3
@@ -128,38 +128,27 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: javy-${{ matrix.build }}-linux
+          name: javy-${{ matrix.arch }}-linux
           path: target/release/javy
-
-  bin:
-    needs: [cli]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          path: bins/
-
-      - run: gzip -k -f bins/javy-arm64-linux/javy && mv bins/javy-arm64-linux/javy.gz javy-aarch64-linux.gz
-      - run: gzip -k -f bins/javy-amd64-linux/javy && mv bins/javy-amd64-linux/javy.gz javy-x86_64-linux.gz
-
-      - if: startsWith(github.ref, 'refs/tags/suborbital-v')
-        uses: alexellis/upload-assets@0.4.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          asset_paths: '["javy-*-linux.gz"]'
 
   image:
     needs: [cli]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        arch:
+          - arm64
+          - amd64
+        include:
+          - arch: arm64
+            os: buildjet-2vcpu-ubuntu-2204-arm
+          - arch: amd64
+            os: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
       - uses: docker/setup-buildx-action@v2
-      - uses: docker/setup-qemu-action@v2
-
-      - uses: actions/download-artifact@v3
-        with:
-          path: bins/
 
       - if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
         uses: docker/login-action@v2
@@ -175,29 +164,65 @@ jobs:
           tags: |
             type=match,pattern=suborbital-(v.*),group=1
           flavor: |
-            latest=auto
+            latest=false
+            suffix=-${{ matrix.arch }}
 
       # Build the image on pulls, main
-      - if: ${{ !startsWith(github.ref, 'refs/tags/suborbital-v') }}
+      - name: Build javy image
         uses: docker/build-push-action@v3
         with:
           cache-from: type=gha
-          context: .
-          file: Dockerfile-ci
+          file: Dockerfile
           load: true
           push: false
           tags: ghcr.io/suborbital/javy:dev
-      - if: ${{ !startsWith(github.ref, 'refs/tags/suborbital-v') }}
-        run: docker run -i --rm ghcr.io/suborbital/javy:dev /usr/local/bin/javy --version
+
+      - run: docker run -i --rm ghcr.io/suborbital/javy:dev /usr/local/bin/javy --version
 
       # Build and push the image on release tags
-      - if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
+      - name: Build and push javy image
+        if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
         uses: docker/build-push-action@v3
         with:
           cache-from: type=gha
-          context: .
-          file: Dockerfile-ci
-          platforms: linux/amd64,linux/arm64
+          cache-to: type=gha,mode=max
+          file: Dockerfile
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
+
+  manifest:
+    if: startsWith(github.ref, 'refs/tags/suborbital-v')
+    needs: [image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get release tag
+        id: release
+        run: |
+          tag=${GITHUB_REF#"refs/tags/suborbital-"}
+          echo $tag
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      - uses: Noelware/docker-manifest-action@v0.2.3
+        with:
+          base-image: ghcr.io/suborbital/javy:${{ steps.release.outputs.tag }}
+          extra-images: ghcr.io/suborbital/javy:latest,ghcr.io/suborbital/javy:${{ steps.release.outputs.tag }}-amd64,ghcr.io/suborbital/javy:${{ steps.release.outputs.tag }}-arm64
+          push: true
+
+  bin:
+    needs: [cli, image]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          path: bins/
+
+      - run: gzip -k -f bins/javy-arm64-linux/javy && mv bins/javy-arm64-linux/javy.gz javy-aarch64-linux.gz
+      - run: gzip -k -f bins/javy-amd64-linux/javy && mv bins/javy-amd64-linux/javy.gz javy-x86_64-linux.gz
+
+      - if: startsWith(github.ref, 'refs/tags/suborbital-v')
+        uses: alexellis/upload-assets@0.4.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          asset_paths: '["javy-*-linux.gz"]'
