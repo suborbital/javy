@@ -218,6 +218,12 @@ jobs:
           echo $tag
           echo "version=$version" >> $GITHUB_OUTPUT
 
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: docker manifest create ghcr.io/suborbital/javy:${{ steps.tag.outputs.version }}
         uses: Noelware/docker-manifest-action@v0.2.3
         with:
