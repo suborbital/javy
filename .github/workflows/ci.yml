@@ -142,14 +142,6 @@ jobs:
       - run: gzip -k -f bins/javy-arm64-linux/javy && mv bins/javy-arm64-linux/javy.gz javy-aarch64-linux.gz
       - run: gzip -k -f bins/javy-amd64-linux/javy && mv bins/javy-amd64-linux/javy.gz javy-x86_64-linux.gz
 
-      - name: Get release tag
-        if: startsWith(github.ref, 'refs/tags/suborbital-v')
-        id: release
-        run: |
-          tag=${GITHUB_REF#"refs/tags/suborbital-"}
-          echo $tag
-          echo "tag=$tag" >> $GITHUB_OUTPUT
-
       - if: startsWith(github.ref, 'refs/tags/suborbital-v')
         uses: alexellis/upload-assets@0.4.0
         env:
@@ -192,9 +184,11 @@ jobs:
           cache-from: type=gha
           context: .
           file: Dockerfile-ci
+          load: true
           push: false
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ghcr.io/suborbital/javy:dev
+      - if: ${{ !startsWith(github.ref, 'refs/tags/suborbital-v') }}
+        run: docker run -i --rm ghcr.io/suborbital/javy:dev /usr/local/bin/javy --version
 
       # Build and push the image on release tags
       - if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
