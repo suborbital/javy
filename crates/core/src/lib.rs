@@ -159,15 +159,6 @@ fn setup_imports(context: &Context, import_obj: &Value) {
                 query_size: i32,
                 ident: i32,
             ) -> i32;
-            fn cache_set(
-                key_pointer: *const u8,
-                key_size: i32,
-                value_pointer: *const u8,
-                value_size: i32,
-                ttl: i32,
-                ident: i32,
-            ) -> i32;
-            fn cache_get(key_pointer: *const u8, key_size: i32, ident: i32) -> i32;
             fn request_get_field(
                 field_type: i32,
                 key_pointer: *const u8,
@@ -189,13 +180,6 @@ fn setup_imports(context: &Context, import_obj: &Value) {
                 val_size: i32,
                 ident: i32,
             );
-            fn get_static_file(name_pointer: *const u8, name_size: i32, ident: i32) -> i32;
-            fn db_exec(
-                query_type: i32,
-                query_name_pointer: i32,
-                query_name_size: i32,
-                ident: i32,
-            ) -> i32;
             fn get_ffi_result(pointer: *const u8, ident: i32) -> i32;
             fn add_ffi_var(
                 name_pointer: i32,
