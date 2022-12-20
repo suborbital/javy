@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    if: 'false'
+    if: "false"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -80,7 +80,7 @@ jobs:
           path: target/wasm32-wasi/release/javy_core.wasm
 
   cli:
-    needs:  core
+    needs: core
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -245,13 +245,13 @@ jobs:
         with:
           path: bins/
 
-      - run: gzip -k -f bins/javy-arm64-linux/javy && mv bins/javy-arm64-linux/javy.gz javy-aarch64-linux.gz
-      - run: gzip -k -f bins/javy-amd64-linux/javy && mv bins/javy-amd64-linux/javy.gz javy-x86_64-linux.gz
+      - run: tar -czvf javy-aarch64-linux.tar.gz -C bins/javy-arm64-linux javy
+      - run: tar -czvf javy-x86_64-linux.tar.gz -C bins/javy-amd64-linux javy
 
-      - name: Upload gzips to release
+      - name: Upload archives to release
         uses: alexellis/upload-assets@0.4.0
         if: startsWith(github.ref, 'refs/tags/suborbital-v')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          asset_paths: '["javy-*-linux.gz"]'
+          asset_paths: '["javy-*-linux.tar.gz"]'
