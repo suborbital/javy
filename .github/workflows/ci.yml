@@ -201,7 +201,7 @@ jobs:
           cache-from: type=gha
           context: .
           file: Dockerfile
-          platform: linux/${{ matrix.arch }}
+          platforms: linux/${{ matrix.arch }}
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
