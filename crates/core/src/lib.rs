@@ -152,13 +152,6 @@ fn setup_imports(context: &Context, import_obj: &Value) {
                 body_size: i32,
                 ident: i32,
             ) -> i32;
-            fn graphql_query(
-                endpoint_pointer: *const u8,
-                endpoint_size: i32,
-                query_pointer: *const u8,
-                query_size: i32,
-                ident: i32,
-            ) -> i32;
             fn request_get_field(
                 field_type: i32,
                 key_pointer: *const u8,
