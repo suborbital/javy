@@ -138,17 +138,23 @@ jobs:
       fail-fast: true
       matrix:
         arch:
-          - arm64
           - amd64
+          - arm64
         include:
-          - arch: arm64
-            os: buildjet-2vcpu-ubuntu-2204-arm
           - arch: amd64
             os: ubuntu-latest
+          - arch: arm64
+            os: buildjet-2vcpu-ubuntu-2204-arm
+    outputs:
+      amd64: ${{ steps.digests.outputs.amd64 }}
+      arm64: ${{ steps.digests.outputs.arm64 }}
 
     steps:
       - uses: actions/checkout@v3
       - uses: docker/setup-buildx-action@v2
+        with:
+          driver-opts: |
+            image=moby/buildkit:v0.10.6
 
       # Build the image on pulls, main
       - name: Build javy image
@@ -164,30 +170,18 @@ jobs:
 
       - run: docker run --rm ghcr.io/suborbital/javy:dev-${{ matrix.arch }} /usr/local/bin/javy --version
 
-      # Build and push the image on release tags
-      - name: Get release tag
-        if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
-        id: tag
-        run: |
-          version=${GITHUB_REF#"refs/tags/suborbital-"}
-          echo $tag
-          echo "version=$version" >> $GITHUB_OUTPUT
-
       - uses: docker/metadata-action@v4
-        if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
+        if: startsWith(github.ref, 'refs/tags/suborbital-v')
         id: docker_meta
         with:
           images: ghcr.io/suborbital/javy
           tags: |
             type=match,pattern=suborbital-(v.*),group=1
-          labels: |
-            org.opencontainers.image.version=${{ steps.tag.outputs.version }}
           flavor: |
             latest=false
-            suffix=-${{ matrix.arch }}
 
       - uses: docker/login-action@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
+        if: startsWith(github.ref, 'refs/tags/suborbital-v')
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -195,16 +189,24 @@ jobs:
 
       # Build and push the image on release tags
       - name: Build and push javy image
-        if: ${{ startsWith(github.ref, 'refs/tags/suborbital-v') }}
+        if: startsWith(github.ref, 'refs/tags/suborbital-v')
         uses: docker/build-push-action@v3
+        id: build
         with:
           cache-from: type=gha
           context: .
           file: Dockerfile
           platforms: linux/${{ matrix.arch }}
+          # disable provenance when using buildkit 0.11.0+
+          # provenance: false
           push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
+          outputs: type=image,name=ghcr.io/suborbital/javy,push-by-digest=true
           labels: ${{ steps.docker_meta.outputs.labels }}
+
+      - name: Set image digest for ${{ matrix.arch }}
+        if: startsWith(github.ref, 'refs/tags/suborbital-v')
+        id: digests
+        run: echo "${{ matrix.arch }}=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
 
   manifest:
     if: startsWith(github.ref, 'refs/tags/suborbital-v')
@@ -215,7 +217,7 @@ jobs:
         id: tag
         run: |
           version=${GITHUB_REF#"refs/tags/suborbital-"}
-          echo $tag
+          echo $version
           echo "version=$version" >> $GITHUB_OUTPUT
 
       - uses: docker/login-action@v2
@@ -228,13 +230,13 @@ jobs:
         uses: Noelware/docker-manifest-action@v0.2.3
         with:
           base-image: ghcr.io/suborbital/javy:${{ steps.tag.outputs.version }}
-          extra-images: ghcr.io/suborbital/javy:${{ steps.tag.outputs.version }}-amd64,ghcr.io/suborbital/javy:${{ steps.tag.outputs.version }}-arm64
+          extra-images: ghcr.io/suborbital/javy@${{ needs.image.outputs.amd64 }},ghcr.io/suborbital/javy@${{ needs.image.outputs.arm64 }}
           push: true
       - name: docker manifest create ghcr.io/suborbital/javy:latest
         uses: Noelware/docker-manifest-action@v0.2.3
         with:
           base-image: ghcr.io/suborbital/javy:latest
-          extra-images: ghcr.io/suborbital/javy:${{ steps.tag.outputs.version }}-amd64,ghcr.io/suborbital/javy:${{ steps.tag.outputs.version }}-arm64
+          extra-images: ghcr.io/suborbital/javy@${{ needs.image.outputs.amd64 }},ghcr.io/suborbital/javy@${{ needs.image.outputs.arm64 }}
           push: true
 
   bin:
