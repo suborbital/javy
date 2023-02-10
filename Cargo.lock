@@ -925,7 +925,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "binaryen",
@@ -943,7 +943,7 @@ dependencies = [
 
 [[package]]
 name = "javy-core"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "convert_case",
