@@ -22,7 +22,8 @@ impl<'a> Optimizer<'a> {
 
     pub fn write_optimized_wasm(self, dest: impl AsRef<Path>) -> Result<(), Error> {
         let mut wasm = Wizer::new()
-            .allow_wasi(true)
+            .allow_wasi(true)?
+            .wasm_bulk_memory(true)
             .inherit_stdio(true)
             .run(self.wasm)?;
 
