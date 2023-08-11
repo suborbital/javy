@@ -1,4 +1,4 @@
-FROM rust:1.66.0-slim-bullseye as builder
+FROM rust:1.71.0-slim-bookworm as builder
 WORKDIR /root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,5 +17,5 @@ COPY Makefile Makefile
 COPY ./crates ./crates
 RUN make cli
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 COPY --from=builder /root/target/release/javy /usr/local/bin
